@@ -31,7 +31,7 @@ can easily organize and categorize your in-game items for better inventory manag
 2. Navigate to the project directory:
 
    ```shell
-    cd genshin-art-parser
+   cd genshin-art-parser
 
 3. Install the required dependencies using pip:
 
