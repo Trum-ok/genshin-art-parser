@@ -1,3 +1,6 @@
+![LOC](https://tokei.rs/b1/github/Trum-ok/genshin-art-parser?category=lines)
+
+
 # Genshin Impact Artifact Parser
 
 ![logo](Art_img.png)
