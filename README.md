@@ -39,21 +39,8 @@ can easily organize and categorize your in-game items for better inventory manag
     pip install -r requirements.txt
     ```
 
-4. Compile into exe file *(optional)*
-   ```shell
-   pip install pyinstaller && pyinstaller.exe --add-data "art_img.png;." --onefile --windowed -i=icon.ico app.py
-   ```
-   
 ## Usage
 
-run the exe file from dist folder or run app.py
-
-exe:
-   ```shell
-   cd dist && app.exe
-   ```
-
-python script:
    ```shell
    python3 main.py
    ```
