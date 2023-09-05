@@ -1,4 +1,4 @@
-![LOC](https://tokei.rs/b1/github/Trum-ok/genshin-art-parser?category=lines)
+![Lines Of Code](https://tokei.rs/b1/github/Trum-ok/genshin-art-parser?category=code)
 
 
 # Genshin Impact Artifact Parser
