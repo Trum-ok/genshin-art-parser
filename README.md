@@ -23,8 +23,9 @@ can easily organize and categorize your in-game items for better inventory manag
 - **Item Sorting:** The program allows you to sort your items based on various criteria.
 - **Customization:** You can customize the sorting criteria according to your preferences.
 - **User-Friendly:** The project provides a user-friendly interface for easy interaction.
+- **Presets:** Create and use your own presets to save time.
 
-## Installation
+## Installation *(from source code)*
 
 1. Clone the repository to your local machine:
 
@@ -39,13 +40,13 @@ can easily organize and categorize your in-game items for better inventory manag
 3. Install the required dependencies using pip:
 
     ```shell
-    pip install -r requirements.txt
+    pip install -r requirements.txt && pip install pywin32
     ```
 
 ## Usage
 
    ```shell
-   python3 main.py
+   python3 app.py
    ```
 
 Enjoy your organized inventory!
