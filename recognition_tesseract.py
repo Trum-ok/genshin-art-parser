@@ -1,8 +1,10 @@
 import cv2
+import json
 import pytesseract
 from datetime import datetime
 
 import names_list
+from utils import resource_path
 
 startTime = datetime.now()
 
@@ -12,8 +14,6 @@ class RecognitionTesseract:
         super().__init__()
         self.screen_ratio = screen_ratio
         self.screen = screen
-        print(" -"*15)
-        print(self.screen)
 
         if self.screen_ratio == "16:10":
             self.x1_percent, self.y1_percent = 52, 21
@@ -47,47 +47,54 @@ class RecognitionTesseract:
         text = pytesseract.image_to_string(self.gray, lang='rus',
                                            config=f'--oem 3 -c preserve_interword_spaces=1 -c tessedit_char_whitelist="{names_list.char_list}" ')
         text_lines = text.split('\n')
-        # print(text_lines)
 
         while "" in text_lines:
             text_lines.remove("")
 
+        # if len(text_lines) > 4:
+        #     with open("logs\\summary.txt", 'a') as txt_file:
+        #         json.dump(text_lines, txt_file, ensure_ascii=False)
+        #         txt_file.write("\n")
+
         text_lines_mod = [item.replace(":", "") for item in text_lines]
         text_lines_mod = [item.replace("* ", "") for item in text_lines_mod]
+        text_lines_mod = [item.replace("т,", "т.") for item in text_lines_mod]
+        text_lines_mod = [item.replace("аа", "а а") for item in text_lines_mod]
+        text_lines_mod = [item.replace("HP", "НР ") for item in text_lines_mod]  # from En-en to Ru-ru
+        text_lines_mod = [item.replace("НР", "НР ") for item in text_lines_mod]
+        text_lines_mod = [item.replace(', ', "") for item in text_lines_mod]
+        # text_lines_mod = [item.replace(',', "") for item in text_lines_mod]
+        text_lines_mod = [item.replace('           А', "") for item in text_lines_mod]
+        text_lines_mod = [item.replace('            ц,', "") for item in text_lines_mod]
+        text_lines_mod = [item.replace('ох', "") if len(item) == 2 else item for item in text_lines_mod]
+        text_lines_mod = [item.replace("п", "") if len(item) == 1 else item for item in text_lines_mod]
+        text_lines_mod = [item.replace("П", "") if len(item) == 1 else item for item in text_lines_mod]
+        text_lines_mod = [item.replace("ч", "") if len(item) == 1 else item for item in text_lines_mod]
+        text_lines_mod = [item.replace("Г", "") if len(item) == 1 else item for item in text_lines_mod]
+        text_lines_mod = [item.replace("У", "") if len(item) == 1 else item for item in text_lines_mod]
+        text_lines_mod = [item.replace("Х", "") if len(item) == 1 else item for item in text_lines_mod]
 
         # Удаляем некоторые элементы
-        to_remove = ['      ', 'Ж', 'ж', '+', 'ч', '2', 'п', '@', 'г', 'п', 'н']
+        to_remove = ['      ', 'Ж', 'ж', '+', 'ч', '2', '@', 'н', ', ', ',', 'я', 'хи ']
         text_lines_mod = [line for line in text_lines_mod if
                           not any(line.startswith(prefix) for prefix in to_remove)]
+
+        while "" in text_lines_mod:
+            text_lines_mod.remove("")
 
         text_lines_mod = [item.strip() if item.startswith(' ') else item for item in text_lines_mod]
 
         if text_lines_mod[-1].startswith('2 предмета') or text_lines_mod[-1].startswith('2'):
             text_lines_mod.pop()
 
-        # if any(self.text_lines_mod[3].startswith(to_del) for to_del in ['Ж', 'ж']):
-        #     self.text_lines_mod.pop(3)
-        # if self.text_lines_mod[3].startswith('+'):
-        #     self.text_lines_mod.pop(3)
-        # if self.text_lines_mod[3].startswith('ч'):
-        #     self.text_lines_mod.pop(3)
-        # if self.text_lines_mod[3].startswith('2'):
-        #     self.text_lines_mod.pop(3)
-        # if self.text_lines_mod[3].startswith('п'):
-        #     self.text_lines_mod.pop(3)
-        # if self.text_lines_mod[3].startswith('@'):
-        #     self.text_lines_mod.pop(3)
-        # if self.text_lines_mod[3].startswith('г'):
-        #     self.text_lines_mod.pop(3)
-        # if self.text_lines_mod[3].startswith('п'):
-        #     self.text_lines_mod.pop(3)
-        #
-        # if self.text_lines_mod[-1].startswith('2 предмет(а)'):
-        #     self.text_lines_mod.pop()
-        # if self.text_lines_mod[-1].startswith('2)'):
-        #     self.text_lines_mod.pop()
+        for i in text_lines_mod:
+            if i in ["о", "ох", "У", "ох"]:
+                text_lines_mod.remove(i)
 
-        print(text_lines_mod)
+        if len(text_lines_mod) > 4:
+            with open("logs\\summary.txt", 'a') as txt_file:
+                json.dump(text_lines_mod, txt_file, ensure_ascii=False)
+                txt_file.write("\n")
         return text_lines_mod
 
 

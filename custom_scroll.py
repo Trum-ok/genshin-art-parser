@@ -1,9 +1,10 @@
 import time
 import win32api
 import win32con
+from utils import failSafeCheck
 
 
-def scroll(clicks=0, delta_x=0, delta_y=0, delay_between_ticks=0):
+def scroll(clicks=0, delta_x=0, delta_y=0, delay_between_ticks=0.01):
     """
     Source: https://learn.microsoft.com/en-gb/windows/win32/api/winuser/nf-winuser-mouse_event?redirectedfrom=MSDN
 
@@ -33,6 +34,7 @@ def scroll(clicks=0, delta_x=0, delta_y=0, delay_between_ticks=0):
         increment = win32con.WHEEL_DELTA * -1
 
     for _ in range(abs(clicks)):
+        failSafeCheck()
         win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, delta_x, delta_y, increment, 0)
         time.sleep(delay_between_ticks)
 

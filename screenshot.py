@@ -4,7 +4,7 @@ import mss
 
 def take_screenshot():
     with mss.mss() as sct:
-        screenshot = sct.shot(output="screenshot.jpg")
+        sct.shot(output="screenshot.jpg")
 
 
 def delete_screenshot():

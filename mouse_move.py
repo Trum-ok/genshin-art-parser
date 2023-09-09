@@ -1,11 +1,20 @@
-import mouse
-import pyautogui
+import json
 import time
+import logging
+from datetime import datetime
+
 import check
 import screenshot
-import mouse as m
-from datetime import datetime
 from custom_scroll import scroll
+from utils import *
+
+
+# logger_app = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.INFO, filename=f"{__name__}.log", filemode="w",
+#                     format="%(asctime)s %(levelname)s %(message)s")
+
+# try:
+# logger_app.info(f"{__name__}...")
 
 
 class MoveClickCheck:
@@ -47,10 +56,13 @@ class MoveClickCheck:
             self.y_ = 85
 
     def start(self):
-        time.sleep(3)
-        # стартовая позиция
-        pyautogui.moveTo(self.x, self.y)
-        pyautogui.click()
+        time.sleep(3)  # time to open Genshin window
+        moveTo(self.x, self.y)  # start position
+        # ctypes.windll.user32.SetCursorPos(self.x, self.y)
+        # pyautogui.moveTo(self.x, self.y)
+        logging.info("Moused mooved to the start position")
+        # pyautogui.click()
+        click()
         time.sleep(0.9)
         screenshot.take_screenshot()
         self.sort()
@@ -59,10 +71,13 @@ class MoveClickCheck:
         self.moves()
 
     def move_down(self):
-        pyautogui.moveTo(self.x, self.y_)
+        moveTo(self.x, self.y_)
+        # pyautogui.moveTo(self.x, self.y_)
+        time.sleep(0.07)
         scroll(self.scroll)
         time.sleep(0.1)
-        pyautogui.click()
+        # pyautogui.click()
+        click()
         time.sleep(self.sleep_time)
         screenshot.take_screenshot()
         self.sort()
@@ -70,23 +85,41 @@ class MoveClickCheck:
 
     def move_right(self):
         for _ in range(self.steps):
-            pyautogui.move(self.right, 0)
-            pyautogui.click()
+            # pyautogui.move(self.right, 0)
+            # moveTo(self.right, 0)
+            moveRel(self.right, 0)
+            time.sleep(self.sleep_time / 2)
+            # pyautogui.click()
+            click()
             time.sleep(self.sleep_time)
             screenshot.take_screenshot()
             self.sort()
             screenshot.delete_screenshot()
 
     def sort(self):
-        if check.Sort(self.screen_ratio, self.sets_selected, self.substats_selected, self.sands_main_stat_selected,
-                      self.goblet_main_stat_selected, self.circlet_main_stat_selected, self.sands_black,
-                      self.goblet_black, self.circlet_black).check():
-            pyautogui.click()
+        # logger_app.info(f"Sort started...")
+        sort_result = check.Sort(self.screen_ratio, self.sets_selected, self.substats_selected,
+                                 self.sands_main_stat_selected,
+                                 self.goblet_main_stat_selected, self.circlet_main_stat_selected, self.sands_black,
+                                 self.goblet_black, self.circlet_black).check()
+        if sort_result[0]:
+            # pyautogui.click()
+            click()
             time.sleep(0.07)
-            print("Оставить")
+            # print("Оставить")
+            with open("logs\\summary.txt", 'a') as txt_file:
+                json.dump(f"Оставить ({sort_result[1]})", txt_file, ensure_ascii=False, indent=2)
+                txt_file.write("\n")
         else:
             self.counter += 1
-            print("Перекрафт")
+            # print("Перекрафт")
+            with open("logs\\summary.txt", 'a') as txt_file:
+                if sort_result[1] == "-- Artifact scipped":
+                    json.dump(sort_result[1], txt_file, ensure_ascii=False, indent=2)
+                else:
+                    json.dump(f"Перекрафт ({sort_result[1]})", txt_file, ensure_ascii=False, indent=2)
+                txt_file.write("\n")
+        # logger_app.info(f"Sort ended.")
 
     def moves(self):
         i = 0
@@ -98,11 +131,20 @@ class MoveClickCheck:
             self.y_ = self.y_ + self.y_plus
 
             i += 1
-            print(f"Avg. time: {(datetime.now() - start_time) / 6}")
-        pyautogui.moveTo(self.final_x, self.final_y)
-        pyautogui.click()
-        pyautogui.click()
+            # print(f"Avg. time: {(datetime.now() - start_time) / 6}")
+            logging.info(f"Avg. time: {(datetime.now() - start_time) / 6}")
+        moveTo(self.final_x, self.final_y)
+        # pyautogui.moveTo(self.final_x, self.final_y)
+        # pyautogui.click()
+        click()
+        # pyautogui.click()
+        click()
 
+    # logger_app.info(f"Finish.")
+
+
+# except MoveClickCheckError as err:
+#     logger_app.error("MoveClickCheckError", exc_info=True)
 
 if __name__ == "__main__":  # для тестовых запусков
     screen_ratio = "16:9"
