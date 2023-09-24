@@ -1,21 +1,87 @@
 import os
 import sys
+import json
 import ctypes
 import ctypes.wintypes
 import collections
+from ctypes import c_long
+from typing import Tuple
 
 MOUSEEVENTF_LEFTDOWN = 0x0002
 MOUSEEVENTF_LEFTUP = 0x0004
 MOUSEEVENTF_LEFTCLICK = MOUSEEVENTF_LEFTDOWN + MOUSEEVENTF_LEFTUP
 
 
-def resource_path(relative_path):
+def resource_path(relative_path) -> str:
     try:
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
+
+
+def check_dir_exists(exe_path, config_path, default_path, nothing_path):
+    presets_dir = 'presets'
+
+    if not os.path.exists(f"{exe_path}\\{presets_dir}\\"):
+        os.makedirs(f"{exe_path}\\{presets_dir}")
+
+    if not os.path.exists(config_path):
+        with open(config_path, 'w') as json_file:
+            json.dump(
+                {
+                    "presets": [
+                        "nothing",
+                        "default"
+                    ],
+                    "path_to_tesseract": "tesseract",
+                    "language": "rus",
+                    "app_theme": "dark",
+                    "auto_open_genshin": "True",
+                    "screen_ratio": "16:9"
+                }, json_file, ensure_ascii=False
+
+            )
+
+    if not os.path.exists(default_path):
+        with open(default_path, 'w') as json_file:
+            json.dump({"sets": [],
+                       "sands": [], "goblet": [], "circlet": ["Шанс крит. попадания", "Крит. урон"],
+                       "sands_d": [], "goblet_d": [], "circlet_d": [],
+                       "substats": ["Шанс крит. попадания", "Крит. урон"]},
+                      json_file, ensure_ascii=False)
+
+    if not os.path.exists(nothing_path):
+        with open(nothing_path, 'w') as json_file:
+            json.dump({"sets": [],
+                       "sands": [], "goblet": [], "circlet": [],
+                       "sands_d": [], "goblet_d": [], "circlet_d": [],
+                       "substats": []},
+                      json_file, ensure_ascii=False)
+
+
+def path_and_dir() -> Tuple[str, str, str, str]:
+    presets_dir = 'presets'
+    exe_dir = os.path.dirname(sys.executable)
+    # exe_dir = 'C:\\Users\\TrumW\\PycharmProjects\\artparser'
+    # exe_dir = 'C:\\Users\\TrumW\\PycharmProjects\\artparser\\dist'
+    config_path = resource_path(f'{exe_dir}\\{presets_dir}\\config.json')
+    default_path = resource_path(f'{exe_dir}\\{presets_dir}\\default.json')
+    nothing_path = resource_path(f'{exe_dir}\\{presets_dir}\\nothing.json')
+    return exe_dir, config_path, default_path, nothing_path
+
+
+def config_info(config_path):
+    # check_dir_exists()
+
+    with open(config_path, 'r') as json_file:
+        data = json.load(json_file)
+        # presets = data['presets']
+        # tesseract_path = data['path_to_tesseract']
+        # language = data['language']
+    # return presets, tesseract_path
+    return data
 
 
 Point = collections.namedtuple("Point", "x y")
@@ -52,7 +118,7 @@ def _moveTo(x, y):
     ctypes.windll.user32.SetCursorPos(x, y)
 
 
-def _position():
+def _position() -> tuple[c_long, c_long]:
     """Returns the current xy coordinates of the mouse cursor as a two-integer
     tuple by calling the GetCursorPos() win32 function.
 
@@ -62,7 +128,7 @@ def _position():
 
     cursor = ctypes.wintypes.POINT()
     ctypes.windll.user32.GetCursorPos(ctypes.byref(cursor))
-    return (cursor.x, cursor.y)
+    return cursor.x, cursor.y
 
 
 def position(x=None, y=None):
@@ -103,35 +169,6 @@ def click(x=None, y=None):
 
 def _sendMouseEvent(x, y):
     failSafeCheck()
-    """The helper function that actually makes the call to the mouse_event()
-    win32 function.
-
-    Args:
-      ev (int): The win32 code for the mouse event. Use one of the MOUSEEVENTF_*
-      constants for this argument.
-      x (int): The x position of the mouse event.
-      y (int): The y position of the mouse event.
-      dwData (int): The argument for mouse_event()'s dwData parameter. So far
-        this is only used by mouse scrolling.
-
-    Returns:
-      None
-    """
-    assert x is not None and y is not None, 'x and y cannot be set to None'
-    # TODO: ARG! For some reason, SendInput isn't working for mouse events. I'm switching to using the older mouse_event win32 function.
-    # mouseStruct = MOUSEINPUT()
-    # mouseStruct.dx = x
-    # mouseStruct.dy = y
-    # mouseStruct.mouseData = ev
-    # mouseStruct.time = 0
-    # mouseStruct.dwExtraInfo = ctypes.pointer(ctypes.c_ulong(0)) # according to https://stackoverflow.com/questions/13564851/generate-keyboard-events I can just set this. I don't really care about this value.
-    # inputStruct = INPUT()
-    # inputStruct.mi = mouseStruct
-    # inputStruct.type = INPUT_MOUSE
-    # ctypes.windll.user32.SendInput(1, ctypes.pointer(inputStruct), ctypes.sizeof(inputStruct))
-
-    # TODO Note: We need to handle additional buttons, which I believe is documented here:
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-mouse_event
 
     width, height = _size()
     convertedX = 65536 * x // width + 1
@@ -149,14 +186,6 @@ def _size():
 
 
 def linear(n):
-    """
-    Returns ``n``, where ``n`` is the float argument between ``0.0`` and ``1.0``. This function is for the default
-    linear tween for mouse moving functions.
-
-    This function was copied from PyTweening module, so that it can be called even if PyTweening is not installed.
-    """
-
-    # We use this function instead of pytweening.linear for the default tween function just in case pytweening couldn't be imported.
     if not 0.0 <= n <= 1.0:
         raise UtilsException("Argument must be between 0.0 and 1.0.")
     return n

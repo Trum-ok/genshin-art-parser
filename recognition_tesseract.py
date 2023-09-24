@@ -1,12 +1,32 @@
+import re
 import cv2
 import json
 import pytesseract
 from datetime import datetime
+from typing import List
 
 import names_list
-from utils import resource_path
+from utils import config_info, path_and_dir, check_dir_exists
 
 startTime = datetime.now()
+
+paths = path_and_dir()
+
+exe_dir = paths[0]
+config_path = paths[1]
+default_path = paths[2]
+nothing_path = paths[3]
+
+check_dir_exists(exe_dir, config_path, default_path, nothing_path)
+
+tess_dir = config_info(config_path)['path_to_tesseract']
+# pytesseract.pytesseract.tesseract_cmd = fr'{exe_dir}\\{tess_dir}\\tesseract.exe'
+# print(resource_path(fr'{tess_dir}\\tesseract.exe'))
+pytesseract.pytesseract.tesseract_cmd = fr'{tess_dir}\\tesseract.exe'
+
+
+# print(pytesseract.get_languages())
+# print(pytesseract.pytesseract.get_tesseract_version())
 
 
 class RecognitionTesseract:
@@ -42,11 +62,22 @@ class RecognitionTesseract:
 
         self.gray = cv2.cvtColor(self.adjusted, cv2.COLOR_BGR2GRAY)
 
-    def to_string(self):
-        # self.text = pytesseract.image_to_string(self.cropped_img, lang='rus', config='--oem 3')
-        text = pytesseract.image_to_string(self.gray, lang='rus',
-                                           config=f'--oem 3 -c preserve_interword_spaces=1 -c tessedit_char_whitelist="{names_list.char_list}" ')
+    def to_string(self) -> List[str]:
+        """
+        Perform text recognition and processing on the grayscale image.
+
+        Returns:
+            List[str]: Processed text lines after text recognition and processing.
+        """
+        characters = ['абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789,%+ ']
+        # characters = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789,%+ '
+        # pattern = re.compile('[^А-Яа-я0-9,%+ ]')
+
+        config = f'--oem 3 -c preserve_interword_spaces=1 -c tessedit_char_whitelist="{characters[0]}"'
+        text = pytesseract.image_to_string(self.gray, lang='rus', config=config)
+
         text_lines = text.split('\n')
+        print(text_lines)
 
         while "" in text_lines:
             text_lines.remove("")
@@ -63,6 +94,7 @@ class RecognitionTesseract:
         text_lines_mod = [item.replace("HP", "НР ") for item in text_lines_mod]  # from En-en to Ru-ru
         text_lines_mod = [item.replace("НР", "НР ") for item in text_lines_mod]
         text_lines_mod = [item.replace(', ', "") for item in text_lines_mod]
+        text_lines_mod = [item.replace(',,', ",") for item in text_lines_mod]
         # text_lines_mod = [item.replace(',', "") for item in text_lines_mod]
         text_lines_mod = [item.replace('           А', "") for item in text_lines_mod]
         text_lines_mod = [item.replace('            ц,', "") for item in text_lines_mod]
@@ -73,8 +105,10 @@ class RecognitionTesseract:
         text_lines_mod = [item.replace("Г", "") if len(item) == 1 else item for item in text_lines_mod]
         text_lines_mod = [item.replace("У", "") if len(item) == 1 else item for item in text_lines_mod]
         text_lines_mod = [item.replace("Х", "") if len(item) == 1 else item for item in text_lines_mod]
+        text_lines_mod = [item.replace('ла атаки', 'Сила атаки') if item.startswith('ла атаки') else item for item in
+                          text_lines_mod]
 
-        # Удаляем некоторые элементы
+        # Remove specific elements from the list of text lines based on predefined patterns
         to_remove = ['      ', 'Ж', 'ж', '+', 'ч', '2', '@', 'н', ', ', ',', 'я', 'хи ']
         text_lines_mod = [line for line in text_lines_mod if
                           not any(line.startswith(prefix) for prefix in to_remove)]
@@ -82,8 +116,10 @@ class RecognitionTesseract:
         while "" in text_lines_mod:
             text_lines_mod.remove("")
 
+        # Remove leading and trailing spaces from each line
         text_lines_mod = [item.strip() if item.startswith(' ') else item for item in text_lines_mod]
 
+        # Remove last line if it starts with '2 предмета' or '2'
         if text_lines_mod[-1].startswith('2 предмета') or text_lines_mod[-1].startswith('2'):
             text_lines_mod.pop()
 
@@ -91,10 +127,12 @@ class RecognitionTesseract:
             if i in ["о", "ох", "У", "ох"]:
                 text_lines_mod.remove(i)
 
+        # Append processed text lines to a log file if the number of lines is greater than 4
         if len(text_lines_mod) > 4:
             with open("logs\\summary.txt", 'a') as txt_file:
                 json.dump(text_lines_mod, txt_file, ensure_ascii=False)
                 txt_file.write("\n")
+
         return text_lines_mod
 
 
@@ -102,7 +140,9 @@ second = datetime.now() - startTime
 
 if __name__ == "__main__":  # для тестовых запусков
     screen_ratio = "16:9"
-    screen = "img/imaagetest.png"
-    # screen = "screenshot.jpg"
+    # screen = "img/imaagetest.png"
+    # screen = "screenshot1.jpg"
+    screen = 'test_images/jin.png'
     app = RecognitionTesseract(screen_ratio, screen).to_string()
+    print(app)
     print(datetime.now() - startTime + second)
