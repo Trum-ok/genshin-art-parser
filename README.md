@@ -3,7 +3,7 @@
 
 # Genshin Impact Artifact Parser
 
-![logo](static/Art_img.png)
+![logo](Art_img.png)
 
 This Python-based project is designed to help you sort and manage your artifacts in **Genshin Impact**. With this tool, you
 can easily organize and categorize your in-game items for better inventory management.
@@ -51,7 +51,7 @@ from source
    python3 app.py
    ```
 
-![app](static/app.png)
+![app](app.png)
 
 Enjoy your organized inventory!
 
@@ -62,7 +62,7 @@ Select the desired parameters,
 Enter the desired name  _e.g. my_config_  (without /, :, *, ?, ", <, >, |, +, ,\)  
 Press save button  
   
-![preset_name](static/preset_name.png)
+![preset_name](preset_name.png)
 
 ### Advanced customisation
 
